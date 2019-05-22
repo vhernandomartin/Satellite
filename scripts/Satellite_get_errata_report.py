@@ -7,7 +7,7 @@
 #
 # DISCLAIMER: Use it at your own risk, this is not an oficial Satellite script and no support will be provided.
 #
-# AUTHOR: Víctor Hernando
+# AUTHOR: Victor Hernando
 # DATE: 2019-05-21
 #
 
@@ -75,6 +75,18 @@ def get_erratas(hosts_list,cur,cur2):
             cur2.execute(get_pending_errata_sql, (consumer_hosts[0],))
             pending_erratas_summary = cur2.fetchall()
             #print(installed_erratas_summary)
+            get_pending_30_days_sql =   "select count(*) CRITICAL_PENDING_30_DAYS \
+                                        from    katello_content_facets a, \
+                                                katello_content_facet_errata b, \
+                                                katello_errata c, \
+                                                hosts d \
+                                        where   b.content_facet_id = a.id \
+                                        and     b.erratum_id = c.id \
+                                        and     a.host_id = d.id \
+                                        and     d.name = %s \
+                                        and     c.issued < (current_date-30)"
+            cur2.execute(get_pending_30_days_sql, (consumer_hosts[0],))
+            pending_30_days_count = cur2.fetchall()
 
             hostname                        = consumer_hosts[0]
             installed_important             = installed_erratas_summary[0][1]
@@ -91,6 +103,7 @@ def get_erratas(hosts_list,cur,cur2):
             applicable_rpm_count            = pending_erratas_summary[0][4]
             upgradable_rpm_count            = pending_erratas_summary[0][5]
             installable_pending             = pending_erratas_summary[0][6]
+            critical_pending_30_days        = pending_30_days_count[0][0]
         except:
             hostname                        = consumer_hosts[0]
             installed_important             = 0
@@ -107,8 +120,9 @@ def get_erratas(hosts_list,cur,cur2):
             applicable_rpm_count            = pending_erratas_summary[0][4]
             upgradable_rpm_count            = pending_erratas_summary[0][5]
             installable_pending             = pending_erratas_summary[0][6]
+            critical_pending_30_days        = pending_30_days_count[0][0]
 
-        errata_line = ("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (hostname,
+        errata_line = ("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (hostname,
                                                 installed_important,
                                                 installed_low,
                                                 installed_moderate,
@@ -122,12 +136,13 @@ def get_erratas(hosts_list,cur,cur2):
                                                 installable_bug_errata_count,
                                                 applicable_rpm_count,
                                                 upgradable_rpm_count,
-                                                installable_pending))
+                                                installable_pending,
+                                                critical_pending_30_days))
         HostErratas.append(errata_line)
 
 def write_errata_to_file():
     OutputFile = open("/var/tmp/report.csv", 'a')
-    OutputFile.write("HOSTNAME;IMPORTANT_INSTALLED;LOW_INSTALLED;MODERATE_INSTALLED;CRITICAL_INSTALLED;BUGFIX_INSTALLED;TOTAL_INSTALLED;SECURITY_INSTALLED;ENHANCEMENT_INSTALLED;SECURITY_PENDING;ENHANCEMENT_PENDING;BUGFIX_PENDING;APPLICABLE_RPM_PENDING;UPGRADABLE_RPM_PENDING;TOTAL_PENDING\n")
+    OutputFile.write("HOSTNAME;IMPORTANT_INSTALLED;LOW_INSTALLED;MODERATE_INSTALLED;CRITICAL_INSTALLED;BUGFIX_INSTALLED;TOTAL_INSTALLED;SECURITY_INSTALLED;ENHANCEMENT_INSTALLED;SECURITY_PENDING;ENHANCEMENT_PENDING;BUGFIX_PENDING;APPLICABLE_RPM_PENDING;UPGRADABLE_RPM_PENDING;TOTAL_PENDING,CRITICAL_PENDING_30_DAYS\n")
 
     for Host in HostErratas:
         OutputFile.write(Host)
