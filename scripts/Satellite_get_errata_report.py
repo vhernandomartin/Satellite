@@ -2,12 +2,15 @@
 #
 # DESCRIPTION: Script to get a report of pending & applied ERRATAS on hosts managed by Satellite.
 # Please notice that is necessary to set up your candlepin and foreman passwords.
+# candlepin_db_password = $(grep jpa.config.hibernate.connection.password /etc/candlepin/candlepin.conf | cut -d "=" -f 2)
+# foreman_db_password = $(grep password /etc/foreman/database.yml|awk '{print $2}'|sed 's/"//g')
 #
 # DISCLAIMER: Use it at your own risk, this is not an oficial Satellite script and no support will be provided.
 #
-# AUTOR: Víctor Hernando
+# AUTHOR: Víctor Hernando
 # DATE: 2019-05-21
 #
+
 import psycopg2
 import csv
 
