@@ -84,6 +84,8 @@ def get_erratas(hosts_list,cur,cur2):
                                         and     b.erratum_id = c.id \
                                         and     a.host_id = d.id \
                                         and     d.name = %s \
+                                        and     c.errata_type='security' \
+                                        and     c.severity='Critical' \
                                         and     c.issued < (current_date-30)"
             cur2.execute(get_pending_30_days_sql, (consumer_hosts[0],))
             pending_30_days_count = cur2.fetchall()
