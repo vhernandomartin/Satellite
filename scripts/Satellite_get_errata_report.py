@@ -62,6 +62,29 @@ def get_erratas(hosts_list,cur,cur2):
             cur.execute(get_installed_errata_sql, (consumer_hosts[0],))
             installed_erratas_summary = cur.fetchall()
             #print(installed_erratas_summary)
+
+            hostname                        = consumer_hosts[0]
+            installed_important             = installed_erratas_summary[0][1]
+            installed_low                   = installed_erratas_summary[1][1]
+            installed_moderate              = installed_erratas_summary[2][1]
+            installed_critical              = installed_erratas_summary[3][1]
+            installed_bugfix                = installed_erratas_summary[4][1]
+            installed_total                 = installed_erratas_summary[5][1]
+            installed_security              = installed_erratas_summary[6][1]
+            installed_enhancement           = installed_erratas_summary[7][1]
+
+        except:
+            hostname                        = consumer_hosts[0]
+            installed_important             = 0
+            installed_low                   = 0
+            installed_moderate              = 0
+            installed_critical              = 0
+            installed_bugfix                = 0
+            installed_total                 = 0
+            installed_security              = 0
+            installed_enhancement           = 0
+
+        try:
             get_pending_errata_sql = "select    b.name, \
                                     a.installable_security_errata_count, \
                                     a.installable_enhancement_errata_count, \
@@ -90,38 +113,38 @@ def get_erratas(hosts_list,cur,cur2):
             cur2.execute(get_pending_30_days_sql, (consumer_hosts[0],))
             pending_30_days_count = cur2.fetchall()
 
-            hostname                        = consumer_hosts[0]
-            installed_important             = installed_erratas_summary[0][1]
-            installed_low                   = installed_erratas_summary[1][1]
-            installed_moderate              = installed_erratas_summary[2][1]
-            installed_critical              = installed_erratas_summary[3][1]
-            installed_bugfix                = installed_erratas_summary[4][1]
-            installed_total                 = installed_erratas_summary[5][1]
-            installed_security              = installed_erratas_summary[6][1]
-            installed_enhancement           = installed_erratas_summary[7][1]
             installable_sec_errata_count    = pending_erratas_summary[0][1]
             installable_enh_errata_count    = pending_erratas_summary[0][2]
             installable_bug_errata_count    = pending_erratas_summary[0][3]
             applicable_rpm_count            = pending_erratas_summary[0][4]
             upgradable_rpm_count            = pending_erratas_summary[0][5]
             installable_pending             = pending_erratas_summary[0][6]
+        except:
+            installable_sec_errata_count    = 0
+            installable_enh_errata_count    = 0
+            installable_bug_errata_count    = 0
+            applicable_rpm_count            = 0
+            upgradable_rpm_count            = 0
+            installable_pending             = 0
+
+        try:
+            get_pending_30_days_sql =   "select count(*) CRITICAL_PENDING_30_DAYS \
+                                        from    katello_content_facets a, \
+                                                katello_content_facet_errata b, \
+                                                katello_errata c, \
+                                                hosts d \
+                                        where   b.content_facet_id = a.id \
+                                        and     b.erratum_id = c.id \
+                                        and     a.host_id = d.id \
+                                        and     d.name = %s \
+                                        and     c.errata_type='security' \
+                                        and     c.severity='Critical' \
+                                        and     c.issued < (current_date-30)"
+            cur2.execute(get_pending_30_days_sql, (consumer_hosts[0],))
+            pending_30_days_count = cur2.fetchall()
+
             critical_pending_30_days        = pending_30_days_count[0][0]
         except:
-            hostname                        = consumer_hosts[0]
-            installed_important             = 0
-            installed_low                   = 0
-            installed_moderate              = 0
-            installed_critical              = 0
-            installed_bugfix                = 0
-            installed_total                 = 0
-            installed_security              = 0
-            installed_enhancement           = 0
-            installable_sec_errata_count    = pending_erratas_summary[0][1]
-            installable_enh_errata_count    = pending_erratas_summary[0][2]
-            installable_bug_errata_count    = pending_erratas_summary[0][3]
-            applicable_rpm_count            = pending_erratas_summary[0][4]
-            upgradable_rpm_count            = pending_erratas_summary[0][5]
-            installable_pending             = pending_erratas_summary[0][6]
             critical_pending_30_days        = pending_30_days_count[0][0]
 
         errata_line = ("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (hostname,
